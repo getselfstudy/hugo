@@ -25,6 +25,7 @@ import (
 type TestStruct struct {
 	S string
 	M map[string]string
+	D map[string]interface{}
 }
 
 func (t TestStruct) Hello1(arg string) string {
@@ -68,7 +69,8 @@ func TestTemplateExecutor(t *testing.T) {
 {{ printf "hugo" }}
 Map: {{ .M.A }}
 Method: {{ .Hello1 "v1" }}
-
+IndexIn: {{ indexIn .D "a.c" }}
+IndexIn2: {{ indexIn .D (slice "a" "c")}}
 `)
 
 	c.Assert(err, qt.IsNil)
@@ -76,7 +78,8 @@ Method: {{ .Hello1 "v1" }}
 	ex := NewExecuter(&execHelper{})
 
 	var b bytes.Buffer
-	data := TestStruct{S: "sv", M: map[string]string{"a": "av"}}
+	data := TestStruct{S: "sv", M: map[string]string{"a": "av"},
+		D: map[string]interface{}{"a": "av", "b": map[string]string{"c": "cv"}}}
 
 	c.Assert(ex.Execute(templ, &b, data), qt.IsNil)
 	got := b.String()
@@ -85,5 +88,6 @@ Method: {{ .Hello1 "v1" }}
 	c.Assert(got, qt.Contains, "hello hugo")
 	c.Assert(got, qt.Contains, "Map: av")
 	c.Assert(got, qt.Contains, "Method: v2 v1")
-
+	c.Assert(got, qt.Contains, "IndexIn: cv")
+	c.Assert(got, qt.Contains, "IndexIn2: cv")
 }
